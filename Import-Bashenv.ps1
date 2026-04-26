@@ -4,14 +4,31 @@ function Import-BashEnv {
         [string]$ScriptPath
     )
 
-    # 1. 1>/dev/null 仅作用于 source 命令，吞掉脚本的 echo等输出干扰信息
-    # 2. env 命令正常输出，被 PowerShell 捕获
-    $rawEnv = & bash -c "source '$ScriptPath' 1>/dev/null; env"
+    # 传入当前的 PATH，bash 可以继承
+    $currentPath = $env:PATH
+
+    # 执行脚本并只获取脚本产生的新变量
+    $beforeEnv = @{}
+    [System.Environment]::GetEnvironmentVariables('Process').GetEnumerator() | ForEach-Object {
+        $beforeEnv[$_.Key] = $_.Value
+    }
+
+    # bash 继承当前环境
+    $rawEnv = & bash -c @"
+export PATH='$currentPath'
+source '$ScriptPath'
+env
+"@
 
     foreach ($line in $rawEnv) {
         if ($line -match '^([^=]+)=(.*)$') {
-            [System.Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], 'Process')
+            $name = $Matches[1]
+            $value = $Matches[2]
+
+            # 只设置新增或改变的变量
+            if (-not $beforeEnv.ContainsKey($name) -or $beforeEnv[$name] -ne $value) {
+                [System.Environment]::SetEnvironmentVariable($name, $value, 'Process')
+            }
         }
     }
 }
-Set-Alias -Name source -Value Import-BashEnv
