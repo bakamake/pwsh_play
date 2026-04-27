@@ -502,7 +502,7 @@ function man {
 
 function Invoke-Idf {
 	if((get-item /dev/*USB*).UnixMode -ne 'crw-rw-rw-'){sudo chmod 666 /dev/ttyUSB0}
-    bash -c "source /home/bakamake/dev/esp-idf/export.sh 1>&/dev/null && idf.py $args"
+    bash -c "source ~/dev/esp-idf/export.sh 1>&/dev/null && idf.py $args"
 }
 set-alias -name idf.py -value Invoke-Idf -Scope Global -Force
 set-alias -name idf -value Invoke-Idf -Scope Global -Force
@@ -561,14 +561,10 @@ function set-envpathunique {
 	        Write-Host "重复: $($entry.Key)"
 	    }
 	}
-	
-	
-	
 	$env:PATH = [system.Linq.Enumerable]::Distinct([System.Linq.Enumerable]::Order([string[]]$env:PATH.split(":"))) -join ':'
 }
 set-envpathunique
 
-. ~/dev/pwsh_play/Import-Bashenv.ps1
 Set-Alias -name code -value kate
 Set-Alias -name vim -value micro
 Set-Alias -name nano -value micro
