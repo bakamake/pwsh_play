@@ -40,13 +40,13 @@ function Set-GnomeProxy {
         $gsettingsList = "[" + (($ignoreList | ForEach-Object { "'$_'" }) -join ", ") + "]"
         & gsettings set org.gnome.system.proxy ignore-hosts $gsettingsList
 
-        Write-Host "GNOME: Manual proxy settings applied."
-        Write-Host "Proxy IP: $ProxyIP"
-        Write-Host "Proxy Port: $ProxyPort"
-        Write-Host "Ignored Hosts: $IgnoreHosts"
+        Write-Verbose "GNOME: Manual proxy settings applied."
+        Write-Verbose "Proxy IP: $ProxyIP"
+        Write-Verbose "Proxy Port: $ProxyPort"
+        Write-Verbose "Ignored Hosts: $IgnoreHosts"
     }
     elseif ($Mode -eq "none") {
-        Write-Host "GNOME: Proxy disabled."
+        Write-Error "GNOME: Proxy disabled."
     }
 }
 
@@ -73,14 +73,14 @@ function Set-KdeProxy {
         & $kwriteconfig --file kioslaverc --group "Proxy Settings" --key socksProxy $proxyUrl
         & $kwriteconfig --file kioslaverc --group "Proxy Settings" --key NoProxyFor $IgnoreHosts
 
-        Write-Host "KDE: Manual proxy settings applied."
-        Write-Host "Proxy IP: $ProxyIP"
-        Write-Host "Proxy Port: $ProxyPort"
-        Write-Host "Ignored Hosts: $IgnoreHosts"
+        Write-Verbose "KDE: Manual proxy settings applied."
+        Write-Verbose "Proxy IP: $ProxyIP"
+        Write-Verbose "Proxy Port: $ProxyPort"
+        Write-Verbose "Ignored Hosts: $IgnoreHosts"
     }
     elseif ($Mode -eq "none") {
         & $kwriteconfig --file kioslaverc --group "Proxy Settings" --key ProxyType 0
-        Write-Host "KDE: Proxy disabled."
+        Write-Error "KDE: Proxy disabled."
     }
 
     & dbus-send --type=signal /KIO/Scheduler org.kde.KIO.Scheduler.reparseSlaveConfiguration 'string:'
@@ -108,9 +108,9 @@ function Get-DesktopEnvironment {
 }
 
 if (-not $Mode) {
-    Write-Host "Usage: ./proxy_set_linux.ps1 <mode> [proxy_ip proxy_port ignore_hosts]"
-    Write-Host "  mode: 'none' or 'manual'"
-    Write-Host "  If mode is 'manual', provide proxy IP, port, and ignore hosts."
+    Write-Verbose "Usage: ./proxy_set_linux.ps1 <mode> [proxy_ip proxy_port ignore_hosts]"
+    Write-Verbose "  mode: 'none' or 'manual'"
+    Write-Verbose "  If mode is 'manual', provide proxy IP, port, and ignore hosts."
     exit 1
 }
 

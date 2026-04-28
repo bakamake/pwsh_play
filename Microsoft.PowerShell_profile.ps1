@@ -41,158 +41,9 @@ Set-PSReadLineKeyHandler -Key Ctrl+x -ScriptBlock {
     }
 }
 # 运行辅助函数，有一些gui不想占着shell不放，懒得多开几个shell，管理器来也麻烦，用bash一些机制让他回归到systemd父进程，这样kill shell 就不会kill gui了
-. ~/dev/pwsh_play/run-gui.ps1
 #package manager
 ########################################################################
 
-function Get-AptUpdatable {
-    class PackageInfo {
-        [string]$Name
-        [boolean]$IsAuto
-    }
-    $packages = aptitude search '~U' -F “%p”
-
-    return $packages
-}
- 
-if ((Get-Process pwsh).Count -eq 1) {
-    Get-AptUpdatable
-}
-
-function apt {
-      [CmdletBinding()]
-      param(
-          [Parameter(Position = 0)]
-          [ValidateSet('install','remove','update', 'upgrade', 
-          				'list', 'search', 'show', 
-          				'purge','autoremove','full-upgrade','safe-upgrade',
-          				'modernize-sources',
-          				'why','why-not','automark',
-          				'listfiles')]
-          [string]$Command,
-          [Alias('y')][switch]$yes,
-          [Alias('s')][switch]$simulate,
-          [Alias('i')][switch]$installed,
-          [Alias('u')][switch]$upgradable,
-          [Alias('a')][switch]$all,
-          [Alias('r')][switch]$recommend,
-          [Alias('d')][switch]$depend,
-          [Parameter(ValueFromRemainingArguments,ValueFromPipeline)]
-          [string[]]$Arg
-      )
-
-      # 没指定 Command 时，直接透传
-      if (-not $Command) {
-          sudo apt @Arg
-          return
-      }
-
-      # 通用处理
-      $fullArgs = @($Command)
-
-      if ($yes -and $Command -in @('install', 'remove', 'purge', 'autoremove')) {
-          $fullArgs += '-y'
-      }
-      if ($simulate) { $fullArgs += '--simulate' }
-      if ($installed) { $fullArgs += '--installed' }
-      if ($upgradable) { $fullArgs += '--upgradable' }
-      if ($all) { $fullArgs += '-a' }
-
-      $fullArgs += $Arg
-
-      # 特殊处理分支
-      switch ($Command) {
-          'automark' {
-              Write-Host "pre" -ForegroundColor Blue
-              $premanual = apt-mark showmanual
-              $premanual.Count
-              $action = if ($simulate) { { $_ | Select-String 'because|^[0-9]+' } } else { { $_ | Select-String 'because' | ForEach-Object -Parallel { sudo apt-mark auto (($_.Line -split ' ')[0]) } } }
-
-              $i = 0
-              for (;;) {
-                  Write-Host -NoNewline "`r`e[2K $($i+1) / $($premanual.Count) : $($premanual[$i])"
-                  /bin/apt why $premanual[$i++] 2>$null | & $action
-              }
-
-              Write-Host "now" -ForegroundColor Blue
-              (apt-mark showmanual).count
-              return
-          }
-          {$_ -in 'modernize-sources','autoremove'} {
-          	sudo apt @fullArgs
-          	return
-          }
-          'listfiles'{
-          	dpkg @fullArgs
-			return
-          }
-          'show'{
-          	if($recommend){
-          	
-				(aptitude @fullArgs | sls '^(Recommends:|推荐:)').Line |
-				ForEach-Object { $_ -replace '^(Recommends:|推荐:)\s*', '' } |
-				ForEach-Object { $_ -split ',' } |
-				ForEach-Object { $_ -split '\|' } |
-				ForEach-Object { ($_ -replace '\s*\(.*?\)', '').Trim() }
-          		# (/bin/apt @fullArgs |sls '推荐:').Line.Replace(' ','').Split(',').Trim()
-          		return
-          	}elseif($depend){
-				(aptitude @fullArgs | sls '^(Depends:|依赖:|依赖于:)').Line |
-				ForEach-Object { $_ -replace '^(Depends:|依赖:|依赖于:)\s*', '' } |
-				ForEach-Object { $_ -split ',' } |
-				ForEach-Object { $_ -split '\|' } |
-				ForEach-Object { ($_ -replace '\s*\(.*?\)', '').Trim() } 
-          		# (/bin/apt @fullArgs |sls '依赖:|Depends: ').Line.Replace('依赖: ','').Replace('Depends: ','').Replace('依赖于: ','').Split(',').Trim()
-				return
-          }else{
-	          	/bin/apt @fullArgs
-	          	return
-          }
-          }
-          'search' {
-			if($recommend -or $depend){
-				$searchall = aptitude search '~n.'
-				if($recommend){
-					$names = @(apt show $Arg -recommend | Where-Object { $_.Trim() })
-					$pattern = ($names | ForEach-Object { [regex]::Escape($_) }) -join '|'	
-					$searchall | Select-String "^\S+(?:\s+\S+)?\s+($pattern)\s+-" -NoEmphasis
-					return
-				}else{
-					$names = @(apt show $Arg -depend | Where-Object { $_.Trim() })
-					$pattern = ($names | ForEach-Object { [regex]::Escape($_) }) -join '|'	
-					$searchall | Select-String "^\S+(?:\s+\S+)?\s+($pattern)\s+-" -NoEmphasis
-					return
-				}
-			}else{
-			aptitude @fullArgs
-			}
-          }
-          default {
-              sudo aptitude @fullArgs
-          }
-          }
-  }
-
-function dpkg{
-	[CmdletBinding()]
-    param(
-		[Parameter(Mandatory, Position = 0,ParameterSetName = 'Command')]
-		[ValidateSet('install','unpack','record-avail','configure','search','triggers-only','remove','purge','verify','get-selections','set-selections','clear-selections','update-avail','merge-avail','clear-avail','forget-old-unavail','status','print-avail','listfiles','list','audit','yet-to-unpack','predep-package','add-architecture','remove-architecture','print-architecture','print-foreign-architectures','assert','validate','compare-versions','force-help','debug=help','help','version')]
-		[string]$Command,
-		[Parameter(ValueFromPipeline = $true,ValueFromRemainingArguments = $true, ParameterSetName = 'Command')]
-		[object[]]$Args,
-		[Parameter(ParameterSetName = 'Option')]
-		[ValidateSet('admindir','root','instdir','pre-invoke','post-invoke','path-exclude','path-include','selected-only','skip-same-version','refuse-downgrade','auto-deconfigure','triggers','no-triggers','verify-format','no-pager','no-debsig','simulate','debug','status-fd','status-logger','log','ignore-depends','force','no-force','refuse','abort-after')]
-    		[string]$option
-	)
-    # $dpkg = "/usr/bin/dpkg" 
-	[string[]]$sudoCommand = @('install','remove','purge')
-    $cmd = if ($Command -in $sudoCommand) { 'sudo' , "/usr/bin/dpkg"} else {"/usr/bin/dpkg"}
-	if($option){
-		$options = '--'+$option
-	}
-	& @cmd --$Command $options @Args
-}
 
 function search-ico { fdfind -a -HI -t f -e desktop . /usr/share/applications ~/.local/share/applications /var/lib/flatpak/exports/share/applications ~/.local/share/flatpak/exports/share/applications 2>$null|Get-Item|sls $args}
 
@@ -272,8 +123,7 @@ if (!(Get-Process v2rayN -ErrorAction SilentlyContinue) -or (Get-Process mihomo 
       }
       $resp.Close()
   }
-# 配置代理
-~/dev/pwsh_play/proxy_set_linux_sh.ps1 manual 127.0.0.1 10808 "localhost,127.0.0.1,::1"
+
 
 function claude {
     & {
@@ -520,13 +370,17 @@ set-alias -name nano -value micro
 
 npm config set prefix "~/.local/share/npm"
 $env:PATH += ":" + "$HOME/.local/share/npm/bin"
-$env:PATH += ":" + "$HOME/dev/lsp-bridge/python-lsp-bridge"
 
-$env:PWSH_PLAY_PATH = Join-Path $HOME 'dev/pwsh_play'
-. $env:PWSH_PLAY_PATH/get-Speak.ps1
-. $env:PWSH_PLAY_PATH/get-function.ps1
-. $env:PWSH_PLAY_PATH/Get-ChildNamespace.ps1
-. $env:PWSH_PLAY_PATH/bash-env.ps1
+$env:PWSH_PLAY = Join-Path $HOME 'dev/pwsh_play'
+. $env:PWSH_PLAY/get-Speak.ps1
+. $env:PWSH_PLAY/get-function.ps1
+. $env:PWSH_PLAY/Get-ChildNamespace.ps1
+. $env:PWSH_PLAY/bash-env.ps1
+. $env:PWSH_PLAY/manager-deb.ps1
+. $env:PWSH_PLAY/run-gui.ps1
+# 配置代理
+. $env:PWSH_PLAY/proxy_set_linux_sh.ps1 manual 127.0.0.1 10808 "localhost,127.0.0.1,::1" | Out-Null
+
 # steam 启动脚本修改： 变成 系统默认终端
 if(test-path /bin/steam){$terminal = Select-String xterm -path /bin/steam;if($terminal.count -ne 0){'steam 依赖于 xtrem'} }
 # 
@@ -543,7 +397,6 @@ if(test-path /bin/steam){$terminal = Select-String xterm -path /bin/steam;if($te
 # $env:PATH += ":$env:ANDROID_HOME/emulator"
 # $env:PATH += ":$env:ANDROID_USER_HOME/cmdline-tools/bin"
 # 
-
 # pwsh 终端设置
 $Env:POWERSHELL_UPDATECHECK = 'Off'
 $Env:POWERSHELL_TELEMETRY_OPTOUT = 1

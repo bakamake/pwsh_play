@@ -1,3 +1,4 @@
+$path=$env:PATH
 function export {
     $args | ForEach-Object {
         $parts = $_.split('=', 2)
@@ -43,6 +44,7 @@ env
         }
     }
 }
+Set-Alias source Import-BashEnv
 # function source {
 #
 # }
