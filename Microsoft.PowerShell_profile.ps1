@@ -148,7 +148,8 @@ function Get-CommandParameters {
 function mem {
     # 定义监控目标及其匹配模式
     $targets = @{
-        'chrome'  = 'chrome'
+        'chrome'  = 'chrom'
+        'chrome-bwrap' = 'bwrap'
         'firefox' = 'firefox'
         'wechat'  = 'wechat'
         'wine'    = 'wine|wineserver|\.exe'  # 匹配 wine 核心及所有 windows 程序
@@ -381,10 +382,6 @@ $env:PWSH_PLAY = Join-Path $HOME 'dev/pwsh_play'
 # 配置代理
 . $env:PWSH_PLAY/proxy_set_linux_sh.ps1 manual 127.0.0.1 10808 "localhost,127.0.0.1,::1" | Out-Null
 
-# steam 启动脚本修改： 变成 系统默认终端
-if(test-path /bin/steam){$terminal = Select-String xterm -path /bin/steam;if($terminal.count -ne 0){'steam 依赖于 xtrem'} }
-# 
-# 
 # # 安卓
 # # sudo apt install default-jdk
 # $env:JAVA_HOME='/usr/lib/jvm/java-21-openjdk-amd64'
