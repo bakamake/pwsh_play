@@ -121,29 +121,35 @@ function apt {
 			aptitude @fullArgs
 			}
           }
+          'purge' {
+            sdpkg @fullArgs
+          }
           default {
               sudo aptitude @fullArgs
           }
           }
   }
 set-alias apt-get apt
-function dpkg{
-	[CmdletBinding()]
+function dpkg {
+
+        [CmdletBinding()]
     param(
-		[Parameter(Mandatory, Position = 0,ParameterSetName = 'Command')]
-		[ValidateSet('install','unpack','record-avail','configure','search','triggers-only','remove','purge','verify','get-selections','set-selections','clear-selections','update-avail','merge-avail','clear-avail','forget-old-unavail','status','print-avail','listfiles','list','audit','yet-to-unpack','predep-package','add-architecture','remove-architecture','print-architecture','print-foreign-architectures','assert','validate','compare-versions','force-help','debug=help','help','version')]
-		[string]$Command,
-		[Parameter(ValueFromPipeline = $true,ValueFromRemainingArguments = $true, ParameterSetName = 'Command')]
-		[object[]]$Args,
-		[Parameter(ParameterSetName = 'Option')]
-		[ValidateSet('admindir','root','instdir','pre-invoke','post-invoke','path-exclude','path-include','selected-only','skip-same-version','refuse-downgrade','auto-deconfigure','triggers','no-triggers','verify-format','no-pager','no-debsig','simulate','debug','status-fd','status-logger','log','ignore-depends','force','no-force','refuse','abort-after')]
-    		[string]$option
-	)
-    # $dpkg = "/usr/bin/dpkg"
-	[string[]]$sudoCommand = @('install','remove','purge')
+                [Parameter(Mandatory, Position = 0,ParameterSetName = 'Command')]
+                [ValidateSet('install','unpack','record-avail','configure','search','triggers-only','remove','purge','verify','get-selections','set-selections','clear-selections','update-avail','merge-avail','clear-avail','forget-old-unavail','status','print-avail','listfiles','list','audit','yet-to-unpack','predep-package','add-architecture','remove-architecture','print-architecture','print-foreign-architectures','assert','validate','compare-versions','force-help','debug=help','help','version')]
+                [string]$Command,
+                [Parameter(ValueFromPipeline)]
+                [object[]]$Args,
+#                 [Parameter(ParameterSetName = 'Option')]
+                [ValidateSet('admindir','root','instdir','pre-invoke','post-invoke','path-exclude','path-include','selected-only','skip-same-version','refuse-downgrade','auto-deconfigure','triggers','no-triggers','verify-format','no-pager','no-debsig','simulate','debug','status-fd','status-logger','log','ignore-depends','force','no-force','refuse','abort-after')]
+                [string]$option
+        )
+    process{
+        # $dpkg = "/usr/bin/dpkg"
+        [string[]]$sudoCommand = @('install','remove','purge')
     $cmd = if ($Command -in $sudoCommand) { 'sudo' , "/usr/bin/dpkg"} else {"/usr/bin/dpkg"}
-	if($option){
-		$options = '--'+$option
-	}
-	& @cmd --$Command $options @Args
+        if($option){
+                $options = '--'+$option
+        }
+        & $cmd[0] $cmd[1] --$Command $options @Args
+    }
 }

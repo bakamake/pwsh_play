@@ -95,51 +95,63 @@ Set-PSReadLineOption @PSReadLineOptions
 
 ########################################################################################
 #网络
-if (!(Get-Process v2rayN -ErrorAction SilentlyContinue) -or (Get-Process mihomo -ErrorAction SilentlyContinue)) {
-    Get-ChildItem Env: | Where-Object { $_.Name -like "*proxy*" } | Remove-Item
-    Get-ChildItem Env: | Where-Object { $_.Name -like "*proxy*" }
-}else{
-	$env:http_proxy='http://127.0.0.1:10808'
-	$env:https_proxy='http://127.0.0.1:10808'
-	$env:all_proxy='socks5://127.0.0.1:10808'
-	$env:HTTP_PROXY='http://127.0.0.1:10808'
-	$env:HTTPS_PROXY='http://127.0.0.1:10808'
-	$env:ALL_PROXY='socks5://127.0.0.1:10808'
-}
-
-# 校园网内网登陆跳转地址查询
-  try {
-      $r = Invoke-WebRequest google.com -TimeoutSec 2 -Proxy $null -ErrorAction Stop 
-  } catch {
-      Write-Host "网络不通，需要登录校园网"
-      # 获取跳转地址
-      $req = [Net.HttpWebRequest]::Create("http://10.26.192.3")
-      $req.Timeout = 1000
-      $req.Proxy = $null
-      $req.AllowAutoRedirect = $false
-      $resp = $req.GetResponse()
-      if ($resp.Headers["Location"]) {
-          xdg-open "http://baidu.com" &
-      }
-      $resp.Close()
-  }
 
 
-function claude {
-    & {
-        # 查找真实的程序路径
-        $realClaude = Get-Command -Name "claude" -CommandType Application -ErrorAction SilentlyContinue
+# if (!(Get-Process v2rayN -ErrorAction SilentlyContinue) -or (Get-Process mihomo -ErrorAction SilentlyContinue)) {
+#     Get-ChildItem Env: | Where-Object { $_.Name -like "*proxy*" } | Remove-Item
+#     Get-ChildItem Env: | Where-Object { $_.Name -like "*proxy*" }
+# }else{
+# 	$env:http_proxy='http://127.0.0.1:10808'
+# 	$env:https_proxy='http://127.0.0.1:10808'
+# 	$env:all_proxy='socks5://127.0.0.1:10808'
+# 	$env:HTTP_PROXY='http://127.0.0.1:10808'
+# 	$env:HTTPS_PROXY='http://127.0.0.1:10808'
+# 	$env:ALL_PROXY='socks5://127.0.0.1:10808'
+# }
+#
+# # 校园网内网登陆跳转地址查询
+#   try {
+#       $r = Invoke-WebRequest baidu.com -TimeoutSec 2 -Proxy $null -ErrorAction Stop
+#       . $env:PWSH_PLAY/proxy_set_linux_sh.ps1 manual 127.0.0.1 10808 "localhost,127.0.0.1,::1" | Out-Null
+#         v2rayN
+#   } catch {
+#       Write-Host "网络不通，需要登录校园网"
+#       # 获取跳转地址
+#       $req = [Net.HttpWebRequest]::Create("http://10.26.192.3")
+#       $req.Timeout = 1000
+#       $req.Proxy = $null
+#       $req.AllowAutoRedirect = $false
+#       $resp = $req.GetResponse()
+#       if ($resp.Headers["Location"]) {
+#           xdg-open "http://baidu.com" &
+#       }
+#       $resp.Close()
+#   }
+#
+#
+#     $req = [Net.WebRequest]::Create("http://1.1.1.1")
+#     $ar = $req.BeginGetResponse($null, $null);    if ($ar.AsyncWaitHandle.WaitOne(3000)) {
+#         $req.EndGetResponse($ar).ResponseUri.OriginalString
+#     } else {
+#         "超时"
+#         xdg-open "http://1.1.1.1" &
+#     }
 
-        if ($realClaude) {
-            # 内部直接用 @args，因为它现在接收到了外部传进来的值
-            & $realClaude @args
-        }
-        else {
-            Write-Error "找不到 claude 可执行程序。"
-        }
-    } @args
-    printf '\e[?2004l'
-}
+# function claude {
+#     & {
+#         # 查找真实的程序路径
+#         $realClaude = Get-Command -Name "claude" -CommandType Application -ErrorAction SilentlyContinue
+#
+#         if ($realClaude) {
+#             # 内部直接用 @args，因为它现在接收到了外部传进来的值
+#             & $realClaude @args
+#         }
+#         else {
+#             Write-Error "找不到 claude 可执行程序。"
+#         }
+#     } @args
+#     printf '\e[?2004l'
+# }
 
 function Get-CommandParameters {
     (Get-Command @args).Parameters.Keys
@@ -228,7 +240,6 @@ function Get-SharedLibrary {
                                 Binary  = Split-Path $fullPath -Leaf
                                 Library = $Matches.lib
                                 LibPath = $Matches.path
-                                Status  = "OK"
                             }
                         }
                         # 情况 B: 库缺失 => lib名称 => not found
@@ -236,8 +247,7 @@ function Get-SharedLibrary {
                             [PSCustomObject]@{
                                 Binary  = Split-Path $fullPath -Leaf
                                 Library = $Matches.lib
-                                LibPath = "NOT FOUND"
-                                Status  = "Missing"
+                                LibPath = ""
                             }
                         }
                     }
@@ -380,7 +390,6 @@ $env:PWSH_PLAY = Join-Path $HOME 'dev/pwsh_play'
 . $env:PWSH_PLAY/manager-deb.ps1
 . $env:PWSH_PLAY/run-gui.ps1
 # 配置代理
-. $env:PWSH_PLAY/proxy_set_linux_sh.ps1 manual 127.0.0.1 10808 "localhost,127.0.0.1,::1" | Out-Null
 
 # # 安卓
 # # sudo apt install default-jdk
