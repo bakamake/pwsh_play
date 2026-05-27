@@ -10,3 +10,4 @@ function Get-Translate {
    $result = claude -p "把以下内容翻译成$lang： $string"
    $result
 }
+function get-dict {xdg-open https://relingo.net/zh/dict/$args &}

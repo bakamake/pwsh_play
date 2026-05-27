@@ -122,7 +122,7 @@ function apt {
 			}
           }
           'purge' {
-            sdpkg @fullArgs
+            sudo aptitude @fullArgs
           }
           default {
               sudo aptitude @fullArgs
@@ -130,8 +130,9 @@ function apt {
           }
   }
 set-alias apt-get apt
-function dpkg {
 
+
+function dpkg {
         [CmdletBinding()]
     param(
                 [Parameter(Mandatory, Position = 0,ParameterSetName = 'Command')]
@@ -139,17 +140,42 @@ function dpkg {
                 [string]$Command,
                 [Parameter(ValueFromPipeline)]
                 [object[]]$Args,
-#                 [Parameter(ParameterSetName = 'Option')]
+                [Parameter(ValueFromRemainingArguments)]
+                [string[]]$RemainingArgs,
+                [Parameter(ParameterSetName = 'Option')]
                 [ValidateSet('admindir','root','instdir','pre-invoke','post-invoke','path-exclude','path-include','selected-only','skip-same-version','refuse-downgrade','auto-deconfigure','triggers','no-triggers','verify-format','no-pager','no-debsig','simulate','debug','status-fd','status-logger','log','ignore-depends','force','no-force','refuse','abort-after')]
                 [string]$option
         )
     process{
-        # $dpkg = "/usr/bin/dpkg"
+        $dpkg = "/usr/bin/dpkg"
         [string[]]$sudoCommand = @('install','remove','purge')
-    $cmd = if ($Command -in $sudoCommand) { 'sudo' , "/usr/bin/dpkg"} else {"/usr/bin/dpkg"}
+    $sudo = ''
+    if ($Command -in $sudoCommand) { $sudo = 'sudo' }
         if($option){
                 $options = '--'+$option
         }
-        & $cmd[0] $cmd[1] --$Command $options @Args
+        Invoke-Expression "$sudo $dpkg --$Command $options @Args @RemainingArgs"
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# showrecommend
+# (apt show kubuntu-desktop|grep ^Recommends:).Replace("Recommends:","").Trim().Split(", ")
+# showdepend
+# (apt show kubuntu-desktop|grep ^Depends:).Replace("Depends:","").Trim().Split(", ")
