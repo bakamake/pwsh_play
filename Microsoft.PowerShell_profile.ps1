@@ -1,45 +1,13 @@
 $env:EDITOR = "micro"
-# 禁用终端的 bracketed paste 模式，ghostty terminal 对这个功能没有兼容标准
-printf '\e[?2004l'
+# # 禁用终端的 bracketed paste 模式，ghostty terminal 对这个功能没有兼容标准
+# printf '\e[?2004l'
 
 
 # 用 Set-Clipboard 代替 [Microsoft.PowerShell.PSConsoleReadLine]::Copy and Cut
 # 解决旧版本 (latest released version) bug
 # https://github.com/PowerShell/PowerShell/issues/26577
 Remove-PSReadLineKeyHandler -Chord Escape
-Remove-PSReadLineKeyHandler Ctrl+c
-Set-PSReadLineKeyHandler -Key Ctrl+c -ScriptBlock {
-    $start = $null
-    $length = $null
-    $line = $null
-    $cursor = $null
 
-    [Microsoft.PowerShell.PSConsoleReadLine]::GetSelectionState([ref]$start, [ref]$length)
-    [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
-
-    if ($length -gt 0 -and $start -ne $null) {
-        $selected = $line.Substring($start, $length)
-        Set-Clipboard -Value $selected
-        [Microsoft.PowerShell.PSConsoleReadLine]::Paste
-    }
-}
-
-Remove-PSReadLineKeyHandler Ctrl+x
-Set-PSReadLineKeyHandler -Key Ctrl+x -ScriptBlock {
-    $start = $null
-    $length = $null
-    $line = $null
-    $cursor = $null
-
-    [Microsoft.PowerShell.PSConsoleReadLine]::GetSelectionState([ref]$start, [ref]$length)
-    [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
-
-    if ($length -gt 0 -and $start -ne $null) {
-        $selected = $line.Substring($start, $length)
-        Set-Clipboard -Value $selected
-        [Microsoft.PowerShell.PSConsoleReadLine]::Replace($start, $length, '')
-    }
-}
 # 运行辅助函数，有一些gui不想占着shell不放，懒得多开几个shell，管理器来也麻烦，用bash一些机制让他回归到systemd父进程，这样kill shell 就不会kill gui了
 #package manager
 ########################################################################
@@ -338,7 +306,7 @@ set-alias -name idf -value Invoke-Idf -Scope Global -Force
 
 function Invoke-conda {
 	remove-alias -name conda -Scope Global -Force	
-    & "$HOME/.local/miniforge3/bin/conda" shell.powershell hook | Out-String | Invoke-Expression
+    & "$HOME/.local/share/miniforge3/bin/conda" shell.powershell hook | Out-String | Invoke-Expression
     conda @args
 }
 set-alias -name conda -value Invoke-conda -Scope Global -Force
