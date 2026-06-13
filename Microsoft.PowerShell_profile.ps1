@@ -3,9 +3,6 @@ $env:EDITOR = "micro"
 # printf '\e[?2004l'
 
 
-# 用 Set-Clipboard 代替 [Microsoft.PowerShell.PSConsoleReadLine]::Copy and Cut
-# 解决旧版本 (latest released version) bug
-# https://github.com/PowerShell/PowerShell/issues/26577
 Remove-PSReadLineKeyHandler -Chord Escape
 
 # 运行辅助函数，有一些gui不想占着shell不放，懒得多开几个shell，管理器来也麻烦，用bash一些机制让他回归到systemd父进程，这样kill shell 就不会kill gui了
@@ -195,7 +192,6 @@ function Get-SharedLibrary {
 
 function rm-safe { trash-put $args }
 Set-Alias -Name rm -Value rm-safe -Option ReadOnly -Force
-Set-Alias -Name file -Value spf -Option ReadOnly -Force
 Set-Alias -Name ls -Value Get-ChildItem
 
 function fl {
@@ -365,3 +361,6 @@ Set-Alias -name vim -value micro
 Set-Alias -name nano -value micro
 Set-Alias -name gedit -value micro
 
+
+# /usr/lib/android-sdk/cmdline-tools/19.0/bin/sdkmanager 来自google-android-cmdline-tools-19.0-installer 的 sdkmanager "platform-tools"
+export PATH="/usr/lib/android-sdk/platform-tools:$env:PATH"
