@@ -99,7 +99,7 @@ function apt {
           		# (/bin/apt @fullArgs |sls '依赖:|Depends: ').Line.Replace('依赖: ','').Replace('Depends: ','').Replace('依赖于: ','').Split(',').Trim()
 				return
           }else{
-	          	/bin/apt @fullArgs
+	          	apt-cache showpkg @Arg
 	          	return
           }
           }

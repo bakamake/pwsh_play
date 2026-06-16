@@ -1,7 +1,19 @@
+function _quote-bash {
+    param([string]$s)
+    "'" + ($s -replace "'", "'\\''") + "'"
+}
+
 function run-gui {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory, Position = 0)]
+        [string]$App,
+        [Parameter(ValueFromRemainingArguments)]
+        [string[]]$Args
+    )
 
-    param([string]$App)
-    bash -c "setsid $App &>/dev/null & disown; exit" > /dev/null 2>&1
-    #有一些gui不想占着shell不放，懒得多开几个shell，管理器来也麻烦，用bash一些机制让他回归到systemd父进程，这样kill shell 就不会kill gui了
+    $quoted = @($App) + $Args | ForEach-Object { _quote-bash $_ }
+    $line   = 'setsid ' + ($quoted -join ' ') + ' </dev/null >/dev/null 2>&1 & disown; exit'
 
+    bash -c $line > /dev/null 2>&1
 }
