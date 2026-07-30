@@ -140,7 +140,7 @@ function mem {
 function win10 {
     virsh start win10
 	$cmd = 'virt-manager'
-	Run-GUI $cmd 
+	Run-GUI $cmd
 }
 
 function Get-SharedLibrary {
@@ -301,7 +301,7 @@ set-alias -name idf.py -value Invoke-Idf -Scope Global -Force
 set-alias -name idf -value Invoke-Idf -Scope Global -Force
 
 function Invoke-conda {
-	remove-alias -name conda -Scope Global -Force	
+	remove-alias -name conda -Scope Global -Force
     & "$HOME/.local/share/miniforge3/bin/conda" shell.powershell hook | Out-String | Invoke-Expression
     conda @args
 }
@@ -321,6 +321,7 @@ $env:PWSH_PLAY = Join-Path $HOME 'dev/pwsh_play'
 . $env:PWSH_PLAY/bash-env.ps1
 . $env:PWSH_PLAY/manager-deb.ps1
 . $env:PWSH_PLAY/run-gui.ps1
+. $env:PWSH_PLAY/fix-psreadline.ps1
 # 配置代理
 
 # # 安卓
@@ -330,11 +331,11 @@ $env:PWSH_PLAY = Join-Path $HOME 'dev/pwsh_play'
 # $env:ANDROID_HOME='~/Android/Sdk'
 # $env:ANDROID_SDK_ROOT='~/Android/Sdk'
 # # $env:ANDROID_USER_HOME='~/Android'# ANDROID_EMULATOR_HOME default eq ANDROID_USER_HOME  # ANDROID_AVD_HOME default eq  ANDROID_EMULATOR_HOME/avd/
-# 
+#
 # $env:PATH += ":$env:JAVA_HOME/bin"
 # $env:PATH += ":$env:ANDROID_HOME/emulator"
 # $env:PATH += ":$env:ANDROID_USER_HOME/cmdline-tools/bin"
-# 
+#
 # pwsh 终端设置
 $Env:POWERSHELL_UPDATECHECK = 'Off'
 $Env:POWERSHELL_TELEMETRY_OPTOUT = 1
@@ -346,7 +347,7 @@ function set-envpathunique {
 	foreach ($p in $paths) {
 	    $counts[$p] = ($counts[$p] ?? 0) + 1
 	}
-	
+
 	foreach ($entry in $counts.GetEnumerator()) {
 	    if ($entry.Value -gt 1) {
 	        Write-Host "重复: $($entry.Key)"

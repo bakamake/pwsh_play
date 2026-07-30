@@ -17,3 +17,7 @@ function run-gui {
 
     bash -c $line > /dev/null 2>&1
 }
+
+function exp {
+    xdg-open @args > /dev/null 2>&1
+}

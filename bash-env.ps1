@@ -45,6 +45,11 @@ env
     }
 }
 Set-Alias source Import-BashEnv
-# function source {
-#
-# }
+
+function Invoke-bash {
+    param(
+    [string]$bashExpression,
+    [string]$bashCommand
+    )
+    bash -c "$bashExpression;$bashCommand"
+}
